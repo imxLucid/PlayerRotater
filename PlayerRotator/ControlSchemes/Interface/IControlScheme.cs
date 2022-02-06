@@ -1,4 +1,4 @@
-namespace PlayerRotater.ControlSchemes.Interface
+namespace PlayerRotator.ControlSchemes.Interface
 {
 
     using UnityEngine;

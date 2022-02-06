@@ -1,22 +1,17 @@
-# IMPORTANT
-I'm still not fully feeling like updating my mods and the reason i unarchived for now is because i felt like checking why forks have troubles and so on with this one compared to the others.
+# Player Rotator
+- ReMod Addon (Ported to ReMod from original [mod](https://github.com/Psychloor/PlayerRotater))
+- Not Compatible with ReMod FLY
+- Removed Risky Function Check
+- Eliminated UIExpansionKit Dependency
+- Configurable Hotkey via Melon Preferences (Default: Ctrl + G)
+- Allows you to rotate yourself around where you can even replicate the spiderman kissing scene.
 
-wasn't really something at all?
-
-but i'm still not actively updating for now as i've lost so much interest in vrchat as whole
-
-# Player Rotater
-Allows you to rotate yourself around where you can even replicate the spiderman kissing scene.
-
-Can change the rotation origin around either your hips (camera viewpoint for generic avatars) or camera viewpoint at all times
-
-It'll use EmmVRC Black/Whitelisting and check world tags too for games
-
-Does need UIExpansionKit
-
+![Image](https://raw.githubusercontent.com/imxLucid/PlayerRotator/master/Menu.PNG)
 
 # Default Control Scheme
 ## Desktop
+Enable/Disable - Ctrl + G
+
 WASD - Flying around based of the camera
 
 EQ - Up/Down based of the camera
@@ -38,6 +33,8 @@ Right Trigger + Right thumbstick/thumbpad Vertical/Y - Up/Down local based
 
 # JanNyaa (Local Player Based) Control Scheme
 ## Desktop
+Enable/Disable - Ctrl + G
+
 WASD - Flying around based of the local player
 
 EQ - Up/Down based of the local player
@@ -63,9 +60,11 @@ Right Trigger + Right Thumbstick/Pad Horizontal/X - Rotation Roll
 
 
 # Credits
+[Psychloor](https://github.com/psychloor/) - For the original mod 
+
 [Gompo](https://github.com/gompocp/ActionMenuUtils/blob/69f1fe1852810ee977f23dceee5cff0e7b4528d7/ActionMenuAPI.cs#L251) - ~~Stole~~ Borrowed the actionmenu is open from ActionMenuUtils
 
-[Ben](https://github.com/BenjaminZehowlt) Fixed rotating in VR
+[Ben](https://github.com/BenjaminZehowlt) - Fixed rotating in VR
 
-[Knah](https://github.com/knah/) How to do native patches
+[Knah](https://github.com/knah/) - How to do native patches
 

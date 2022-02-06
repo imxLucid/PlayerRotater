@@ -1,23 +1,16 @@
-namespace PlayerRotater
+namespace PlayerRotator
 {
 
     using System;
     using System.Linq;
     using System.Reflection;
     using System.Runtime.InteropServices;
-
     using MelonLoader;
-
     using UnhollowerRuntimeLib.XrefScans;
-
     using UnityEngine;
 
     internal static class ModPatches
     {
-
-        private static OnLeftRoom origOnLeftRoom;
-
-
         private static ApplyPlayerMotion origApplyPlayerMotion;
 
         private static void ApplyPlayerMotionPatch(Vector3 playerWorldMotion, Quaternion playerWorldRotation)
@@ -25,32 +18,8 @@ namespace PlayerRotater
             origApplyPlayerMotion(playerWorldMotion, RotationSystem.Rotating ? Quaternion.identity : playerWorldRotation);
         }
 
-
-        private static void OnLeftRoomPatch(IntPtr instancePtr)
-        {
-            RotationSystem.Instance.OnLeftWorld();
-            origOnLeftRoom(instancePtr);
-        }
-
         internal static bool PatchMethods()
         {
-            try
-            {
-                // Left room
-                MethodInfo onLeftRoomMethod = typeof(NetworkManager).GetMethod(
-                    nameof(NetworkManager.OnLeftRoom),
-                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly,
-                    null,
-                    Type.EmptyTypes,
-                    null);
-                origOnLeftRoom = Patch<OnLeftRoom>(onLeftRoomMethod, GetDetour(nameof(OnLeftRoomPatch)));
-            }
-            catch (Exception e)
-            {
-                Utilities.LoggerInstance.Error("Failed to patch OnLeftRoom\n" + e.Message);
-                return false;
-            }
-
             if (Utilities.IsInVR)
                 try
                 {
@@ -69,7 +38,7 @@ namespace PlayerRotater
                 }
                 catch (Exception e)
                 {
-                    Utilities.LoggerInstance.Error("Failed to patch ApplyPlayerMotion\n" + e.Message);
+                    Utilities.Logger.Error("Failed to patch ApplyPlayerMotion\n" + e.Message);
                     return false;
                 }
 
@@ -91,9 +60,6 @@ namespace PlayerRotater
         {
             return typeof(ModPatches).GetMethod(name, BindingFlags.NonPublic | BindingFlags.Static)!.MethodHandle.GetFunctionPointer();
         }
-
-        [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-        private delegate void OnLeftRoom(IntPtr instancePtr);
 
         [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
         private delegate void ApplyPlayerMotion(Vector3 playerWorldMotion, Quaternion playerWorldRotation);

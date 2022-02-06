@@ -1,24 +1,17 @@
-namespace PlayerRotater
+namespace PlayerRotator
 {
-
     using System;
     using System.Linq;
     using System.Reflection;
-
     using MelonLoader;
-
     using UnhollowerRuntimeLib.XrefScans;
-
-    using UnityEngine;
 
     internal static class Utilities
     {
 
-        internal static MelonLogger.Instance LoggerInstance;
+        internal static MelonLogger.Instance Logger = new MelonLogger.Instance("Rotator");
 
         private static MethodInfo alignTrackingToPlayerMethod;
-
-        internal static GameObject LockRotationButton, ToggleRotaterButton;
 
         // Yes that's a lot of xref scanning but gotta make sure xD
         // Only grabs once anyway ¯\_(ツ)_/¯
@@ -63,17 +56,10 @@ namespace PlayerRotater
             }
         }
 
-        internal static void SetRotationButtons(bool enabled)
-        {
-            if (LockRotationButton is null) return;
-            LockRotationButton.SetActive(enabled);
-            ToggleRotaterButton.SetActive(enabled);
-        }
-
         internal static void LogDebug(string text)
         {
         #if DEBUG
-            Utilities.LoggerInstance.Msg(ConsoleColor.DarkGreen, text);
+            Utilities.Logger.Msg(ConsoleColor.DarkGreen, text);
         #endif
         }
 

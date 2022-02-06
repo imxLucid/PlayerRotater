@@ -1,4 +1,4 @@
-namespace PlayerRotater
+namespace PlayerRotator
 {
 
     public static class InputAxes

@@ -1,11 +1,11 @@
-namespace PlayerRotater.ControlSchemes
+namespace PlayerRotator.ControlSchemes
 {
 
-    using PlayerRotater.ControlSchemes.Interface;
+    using PlayerRotator.ControlSchemes.Interface;
 
     using UnityEngine;
 
-    public class DefaultControlScheme : IControlScheme
+    public class JanNyaaControlScheme : IControlScheme
     {
 
         /// <inheritdoc />
@@ -18,25 +18,24 @@ namespace PlayerRotater.ControlSchemes
                 {
                     // ------------------------------ Flying ------------------------------
                     if (Input.GetKey(KeyCode.W))
-                        RotationSystem.Instance.Fly(1f, cameraTransform.forward);
+                        RotationSystem.Instance.Fly(1f, playerTransform.forward);
 
                     if (Input.GetKey(KeyCode.A))
-                        RotationSystem.Instance.Fly(1f, -cameraTransform.right);
+                        RotationSystem.Instance.Fly(1f, -playerTransform.right);
 
                     if (Input.GetKey(KeyCode.S))
-                        RotationSystem.Instance.Fly(1f, -cameraTransform.forward);
+                        RotationSystem.Instance.Fly(1f, -playerTransform.forward);
 
                     if (Input.GetKey(KeyCode.D))
-                        RotationSystem.Instance.Fly(1f, cameraTransform.right);
+                        RotationSystem.Instance.Fly(1f, playerTransform.right);
 
                     if (Input.GetKey(KeyCode.E))
-                        RotationSystem.Instance.Fly(1f, cameraTransform.up);
+                        RotationSystem.Instance.Fly(1f, playerTransform.up);
 
                     if (Input.GetKey(KeyCode.Q))
-                        RotationSystem.Instance.Fly(1f, -cameraTransform.up);
+                        RotationSystem.Instance.Fly(1f, -playerTransform.up);
 
                     // ----------------------------- Rotation -----------------------------
-
                     // Pitch
                     if (Input.GetKey(KeyCode.UpArrow))
                         RotationSystem.Instance.Pitch(1f);
@@ -69,44 +68,43 @@ namespace PlayerRotater.ControlSchemes
                 if (!Utilities.AnyActionMenuesOpen())
                 {
                     // ------------------------------ VR Flying ------------------------------
-                    if (Mathf.Abs(Input.GetAxis(InputAxes.LeftVertical)) > 0.1f)
+                    if (Mathf.Abs(Input.GetAxis(InputAxes.LeftVertical)) >= 0.1f)
                     {
-                        RotationSystem.Instance.Fly(Input.GetAxis(InputAxes.LeftVertical), cameraTransform.forward);
+                        // Vertical if holding left trigger
+                        RotationSystem.Instance.Fly(
+                            Input.GetAxis(InputAxes.LeftVertical),
+                            Input.GetAxis(InputAxes.LeftTrigger) >= 0.4f ? playerTransform.up : playerTransform.forward);
+
                         alignTracking = true;
                     }
 
-                    if (Mathf.Abs(Input.GetAxis(InputAxes.LeftHorizontal)) > 0.1f)
+                    if (Mathf.Abs(Input.GetAxis(InputAxes.LeftHorizontal)) >= 0.1f)
                     {
-                        RotationSystem.Instance.Fly(Input.GetAxis(InputAxes.LeftHorizontal), cameraTransform.right);
-                        alignTracking = true;
-                    }
-
-                    // Vertical movement VR
-                    if (Mathf.Abs(Input.GetAxis(InputAxes.RightTrigger)) >= 0.4f)
-                    {
-                        RotationSystem.Instance.Fly(Input.GetAxis(InputAxes.LeftVertical), playerTransform.up);
+                        RotationSystem.Instance.Fly(1f, playerTransform.right);
                         alignTracking = true;
                     }
 
                     if (!RotationSystem.LockRotation)
-
+                    {
                         // ----------------------------- VR Rotation -----------------------------
-                        if (Mathf.Abs(Input.GetAxis(InputAxes.RightTrigger)) < .4f)
-                        {
-                            // Pitch
-                            if (Mathf.Abs(Input.GetAxis(InputAxes.RightVertical)) >= .1f)
+
+                        // Pitch
+                        if (Mathf.Abs(Input.GetAxis(InputAxes.RightVertical)) >= .1f)
+                            if (Input.GetAxis(InputAxes.RightTrigger) >= .4f)
                             {
                                 RotationSystem.Instance.Pitch(Input.GetAxis(InputAxes.RightVertical));
                                 alignTracking = true;
                             }
 
-                            // Roll
-                            if (Mathf.Abs(Input.GetAxis(InputAxes.RightHorizontal)) >= .1f)
-                            {
-                                RotationSystem.Instance.Roll(Input.GetAxis(InputAxes.RightHorizontal));
-                                alignTracking = true;
-                            }
+                        if (Mathf.Abs(Input.GetAxis(InputAxes.RightHorizontal)) >= .1f)
+                        {
+                            // Roll if right trigger otherwise yaw
+                            if (Input.GetAxis(InputAxes.RightTrigger) >= .4f) RotationSystem.Instance.Roll(Input.GetAxis(InputAxes.RightHorizontal));
+                            else RotationSystem.Instance.Yaw(Input.GetAxis(InputAxes.RightHorizontal));
+
+                            alignTracking = true;
                         }
+                    }
                 }
             }
 

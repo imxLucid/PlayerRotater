@@ -1,54 +1,42 @@
-namespace PlayerRotater
+namespace PlayerRotator
 {
-
     using System;
     using System.Collections;
-
     using MelonLoader;
-
-    using PlayerRotater.ControlSchemes.Interface;
-
+    using PlayerRotator.ControlSchemes.Interface;
     using UnhollowerRuntimeLib;
-
     using UnityEngine;
-
+    using UnityEngine.UI;
     using Object = UnityEngine.Object;
 
     public class RotationSystem
     {
+        internal bool rotating;
 
-        private Vector3 currentFlyingDirection = Vector3.zero;
-
-        internal static float FlyingSpeed = 5f;
-
-        internal static float RotationSpeed = 180f;
+        internal static Toggle ReModFly;
 
         internal static bool NoClipFlying = true;
+
+        internal static bool BarrelRolling, LockRotation;
 
         internal static RotationSystem Instance;
 
         internal static IControlScheme CurrentControlScheme;
 
-        internal static RotationOriginEnum RotationOrigin = RotationOriginEnum.Hips;
+        private bool usePlayerAxis, holdingShift;
 
-        internal static bool InvertPitch, BarrelRolling, LockRotation;
+        private Vector3 originalGravity;
+
+        private Vector3 currentFlyingDirection = Vector3.zero;
 
         private Utilities.AlignTrackingToPlayerDelegate alignTrackingToPlayer;
 
         private Transform cameraTransform;
 
-        private Vector3 originalGravity;
-
         private Transform playerTransform, originTransform;
-
-        private bool rotating;
-
-        private bool usePlayerAxis, holdingShift;
 
         private RotationSystem()
         { }
-
-        public static bool IsWorldAllowed => VRChatUtilityKit.Utilities.VRCUtils.AreRiskyFunctionsAllowed;
 
         // For emmVRC and other mods to be able to check for
         // needs to fly so other mods can break it/this could break them
@@ -56,11 +44,11 @@ namespace PlayerRotater
 
         internal void Pitch(float inputAmount)
         {
-            if (InvertPitch) inputAmount *= -1;
+            if (Rotator._RotationInvertPitch) inputAmount *= -1;
             playerTransform.RotateAround(
                 originTransform.position,
                 usePlayerAxis ? playerTransform.right : originTransform.right,
-                inputAmount * RotationSpeed * Time.deltaTime * (holdingShift ? 2f : 1f));
+                inputAmount * Rotator._RotationSpeed * Time.deltaTime * (holdingShift ? 2f : 1f));
         }
 
         internal void Yaw(float inputAmount)
@@ -68,7 +56,7 @@ namespace PlayerRotater
             playerTransform.RotateAround(
                 originTransform.position,
                 usePlayerAxis ? playerTransform.up : originTransform.up,
-                inputAmount * RotationSpeed * Time.deltaTime * (holdingShift ? 2f : 1f));
+                inputAmount * Rotator._RotationSpeed * Time.deltaTime * (holdingShift ? 2f : 1f));
         }
 
         internal void Roll(float inputAmount)
@@ -76,7 +64,7 @@ namespace PlayerRotater
             playerTransform.RotateAround(
                 originTransform.position,
                 usePlayerAxis ? -playerTransform.forward : -originTransform.forward,
-                inputAmount * RotationSpeed * Time.deltaTime * (holdingShift ? 2f : 1f));
+                inputAmount * Rotator._RotationSpeed * Time.deltaTime * (holdingShift ? 2f : 1f));
         }
 
         internal void Fly(float inputAmount, Vector3 direction)
@@ -110,16 +98,17 @@ namespace PlayerRotater
         }
 
         // bit weird but i've gotten some errors few times where it bugged out a bit
-        internal void Toggle()
+        internal void Toggle(bool state)
         {
             Utilities.LogDebug("Toggling, current state: " + rotating);
-            if (!IsWorldAllowed) return;
+
+            if (ReModFly.isOn && state) ReModFly.isOn = false;
             if (!rotating) originalGravity = Physics.gravity;
 
             try
             {
                 playerTransform ??= Utilities.GetLocalVRCPlayer().transform;
-                rotating = !rotating;
+                rotating = state;
 
                 if (rotating)
                 {
@@ -136,7 +125,7 @@ namespace PlayerRotater
             }
             catch (Exception e)
             {
-                Utilities.LoggerInstance.Error("Error Toggling: " + e);
+                Utilities.Logger.Error("Error Toggling: " + e);
                 rotating = false;
             }
 
@@ -155,46 +144,22 @@ namespace PlayerRotater
         {
             var isHumanoid = false;
 
-            void GetHumanBoneTransform(HumanBodyBones bone)
-            {
-                // ReSharper disable twice Unity.NoNullPropagation
-                GameObject localAvatar = Utilities.GetLocalVRCPlayer()?.prop_VRCAvatarManager_0?.prop_GameObject_0;
-                Animator localAnimator = localAvatar?.GetComponent<Animator>();
+            // ReSharper disable twice Unity.NoNullPropagation
+            GameObject localAvatar = Utilities.GetLocalVRCPlayer()?.prop_VRCAvatarManager_0?.prop_GameObject_0;
+            Animator localAnimator = localAvatar?.GetComponent<Animator>();
 
-                if (localAnimator != null)
-                {
-                    isHumanoid = localAnimator.isHuman;
-                    originTransform = isHumanoid ? localAnimator.GetBoneTransform(bone) : cameraTransform;
-                }
-                else
-                {
-                    originTransform = cameraTransform;
-                }
+            if (localAnimator != null)
+            {
+                isHumanoid = localAnimator.isHuman;
+                originTransform = isHumanoid ? localAnimator.GetBoneTransform(HumanBodyBones.Hips) : cameraTransform;
+            }
+            else
+            {
+                originTransform = cameraTransform;
             }
 
-            switch (RotationOrigin)
-            {
-                case RotationOriginEnum.Hips:
-                    GetHumanBoneTransform(HumanBodyBones.Hips);
-                    break;
 
-                case RotationOriginEnum.ViewPoint:
-                    originTransform = cameraTransform;
-                    break;
-
-                case RotationOriginEnum.RightHand:
-                    GetHumanBoneTransform(HumanBodyBones.RightHand);
-                    break;
-
-                case RotationOriginEnum.LeftHand:
-                    GetHumanBoneTransform(HumanBodyBones.LeftHand);
-                    break;
-
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(RotationOrigin), RotationOrigin, "What kind of dinkleberry thing did you do to my enum?");
-            }
-
-            usePlayerAxis = RotationOrigin == RotationOriginEnum.Hips && isHumanoid;
+            usePlayerAxis = originTransform && isHumanoid;
         }
 
         internal void UpdateSettings()
@@ -211,23 +176,29 @@ namespace PlayerRotater
 
             if (Utilities.IsInVR)
                 Utilities.GetLocalVRCPlayer()?.prop_VRCPlayerApi_0.Immobilize(rotating);
+
+            alignTrackingToPlayer = Utilities.GetAlignTrackingToPlayerDelegate;
         }
 
-        internal void Update()
+        internal void OnUpdate()
         {
-            if (!rotating) return;
-
-            holdingShift = Input.GetKey(KeyCode.LeftShift);
-            if (!BarrelRolling
-                && CurrentControlScheme.HandleInput(playerTransform, cameraTransform))
+            try
             {
-                // How to stop being able to move diagonally being faster
-                float speed = Mathf.Clamp01(currentFlyingDirection.magnitude) * FlyingSpeed * Time.deltaTime * (holdingShift ? 2f : 1f);
-                playerTransform.position += currentFlyingDirection.normalized * speed;
-                alignTrackingToPlayer();
+                if (!rotating) return;
+
+                holdingShift = Input.GetKey(KeyCode.LeftShift);
+                if (!BarrelRolling
+                    && CurrentControlScheme.HandleInput(playerTransform, cameraTransform))
+                {
+                    // How to stop being able to move diagonally being faster
+                    float speed = Mathf.Clamp01(currentFlyingDirection.magnitude) * Rotator._RotationFlightSpeed * Time.deltaTime * (holdingShift ? 2f : 1f);
+                    playerTransform.position += currentFlyingDirection.normalized * speed;
+                    alignTrackingToPlayer();
+                }
+
+                currentFlyingDirection = Vector3.zero;
             }
-            
-            currentFlyingDirection = Vector3.zero;
+            catch { };
         }
 
         internal void OnLeftWorld()
@@ -235,19 +206,6 @@ namespace PlayerRotater
             rotating = false;
             playerTransform = null;
             alignTrackingToPlayer = null;
-        }
-
-        internal enum RotationOriginEnum
-        {
-
-            Hips,
-
-            ViewPoint,
-
-            RightHand,
-
-            LeftHand
-
         }
 
         /// <summary>
@@ -258,14 +216,8 @@ namespace PlayerRotater
         {
             BarrelRolling = true;
             bool originalRotated = rotating;
-            RotationOriginEnum originalOrigin = RotationOrigin;
 
-            if (!originalRotated) Toggle();
-            if (originalOrigin != RotationOriginEnum.Hips)
-            {
-                RotationOrigin = RotationOriginEnum.Hips;
-                GrabOriginTransform();
-            }
+            if (!originalRotated) Toggle(true);
 
             var degreesCompleted = 0f;
             while (degreesCompleted < 720f)
@@ -279,20 +231,13 @@ namespace PlayerRotater
 
             yield return null;
 
-            if (originalOrigin != RotationOriginEnum.Hips)
-            {
-                RotationOrigin = originalOrigin;
-                GrabOriginTransform();
-                yield return null;
-            }
-
-            if (!originalRotated) Toggle();
+            if (!originalRotated) Toggle(false);
             BarrelRolling = false;
         }
 
         public void BarrelRoll()
         {
-            if (IsWorldAllowed && !Utilities.GetStreamerMode)
+            if (!Utilities.GetStreamerMode)
                 MelonCoroutines.Start(BarrelRollCoroutine());
         }
 
